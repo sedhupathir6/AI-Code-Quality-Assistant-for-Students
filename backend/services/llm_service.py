@@ -24,6 +24,7 @@ RULES:
 4. Speak to a student learning CS, not a senior developer.
 5. Keep explanations under 100 words per section.
 6. The conceptual_question must be answerable in 1-3 words.
+7. CRITICAL: Always return the `optimized_code` in the SAME programming language as the input. If the input is Java, the output MUST be Java. If it is C++, output C++. NEVER switch the language to Python unless the input was Python.
 
 RETURN ONLY VALID JSON. No markdown, no backticks, no preamble."""
 
@@ -82,7 +83,7 @@ Return ONLY this JSON structure:
         import anthropic
         client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
         response = client.messages.create(
-            model="claude-opus-4-5",
+            model="claude-3-opus-20240229",
             max_tokens=2000,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_prompt}]
@@ -227,16 +228,31 @@ async def analyze_code_llm(code: str, language: str) -> dict:
 
 
 async def get_optimization_fallback(code: str, level: int, patterns: list, language: str = "python") -> dict:
-    if language == "python":
+    lang = language.lower()
+    if lang == "python":
         return FALLBACK_OPTIMIZATIONS.get(level, FALLBACK_OPTIMIZATIONS[2])
     
-    # Generic fallback for other languages if LLM fails
+    if lang == "java":
+        return {
+            "optimized_code": """import java.util.*;\n\npublic class OptimizedSolution {\n    // Level 2: O(n) using a HashSet/HashMap\n    public void solve(int[] nums) {\n        Set<Integer> seen = new HashSet<>();\n        for (int num : nums) {\n            if (seen.contains(num)) System.out.println("Duplicate found: " + num);\n            seen.add(num);\n        }\n    }\n}""",
+            "explanation": {
+                "why_inefficient": "Nested loops or linear scans are slow.",
+                "pattern_replaced": "Nested Loop → HashSet",
+                "why_better": "HashSet provides O(1) average lookup.",
+                "complexity_comparison": {"before": "O(n²)", "after": "O(n)"}
+            },
+            "conceptual_question": "What is the average lookup time for a Java HashSet?",
+            "time_complexity_after": "O(n)",
+            "space_complexity_after": "O(n)"
+        }
+
+    # Generic fallback: echo the code but explain why we couldn't optimize
     return {
         "optimized_code": code,
         "explanation": {
-            "why_inefficient": "Unable to generate specific optimization at this time.",
+            "why_inefficient": f"The current {language} code may have bottlenecks.",
             "pattern_replaced": "None",
-            "why_better": "Please try again or check your code structure.",
+            "why_better": "Language-specific optimization failed to generate.",
             "complexity_comparison": {"before": "Unknown", "after": "Unknown"}
         },
         "conceptual_question": "What is the Big O complexity of your current solution?",

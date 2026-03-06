@@ -7,3 +7,33 @@
     display: none;
   }
 }
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:text-slate-900 {
+    color: #0f172a !important;
+  }
+
+  /* Force background colors for charts/badges in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+}
