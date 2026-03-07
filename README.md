@@ -36,7 +36,7 @@ docker-compose up --build
 
 ### 3. Usage
 Once the containers finish building:
-Open your browser to: **http://localhost:5173**
+Open your browser to: **http://localhost:5000**
 - The "Code Execution Sandbox" (`Pyodide`) leverages WebAssembly and spins up safely on your client directly during the demo flow. Try the full O(n) replacement logic! 
 - Watch out for your newly minted XP!
 

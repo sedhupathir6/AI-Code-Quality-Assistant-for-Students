@@ -6,12 +6,12 @@ services:
       POSTGRES_DB: cce_db
       POSTGRES_USER: cce_user
       POSTGRES_PASSWORD: cce_pass
-    ports: ["5432:5432"]
-    volumes: [postgres_data:/var/lib/postgresql/data]
+    ports: [ "5002:5432" ]
+    volumes: [ postgres_data:/var/lib/postgresql/data ]
 
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    ports: [ "5003:6379" ]
 
   minio:
     image: minio/minio
@@ -19,28 +19,28 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    ports: ["9000:9000", "9001:9001"]
-    volumes: [minio_data:/data]
+    ports: [ "5004:9000", "5005:9001" ]
+    volumes: [ minio_data:/data ]
 
   backend:
     build: ./backend
-    ports: ["8000:8000"]
+    ports: [ "5001:5001" ]
     environment:
       DATABASE_URL: postgresql+asyncpg://cce_user:cce_pass@postgres:5432/cce_db
       REDIS_URL: redis://redis:6379
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       JWT_SECRET: ${JWT_SECRET}
       MINIO_ENDPOINT: minio:9000
-    depends_on: [postgres, redis, minio]
-    volumes: [./backend:/app]
+    depends_on: [ postgres, redis, minio ]
+    volumes: [ ./backend:/app ]
 
   frontend:
     build: ./frontend
-    ports: ["5173:5173"]
+    ports: [ "5000:5000" ]
     environment:
-      VITE_API_URL: http://localhost:8000
-    depends_on: [backend]
-    volumes: [./frontend:/app]
+      VITE_API_URL: http://localhost:5001
+    depends_on: [ backend ]
+    volumes: [ ./frontend:/app ]
 
 volumes:
   postgres_data:

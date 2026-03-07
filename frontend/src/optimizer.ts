@@ -19,7 +19,7 @@ export interface OptResult {
 
 // ─── Pattern Detection ────────────────────────────────────────────────────────
 
-export type Pattern = 'nested_loop' | 'two_sum' | 'recursion_no_memo' | 'linear_search_in_loop' | 'string_concat_in_loop' | 'heap_priority_queue' | 'bfs_queue' | 'unbalanced_tree' | 'already_optimal' | 'unknown'
+export type Pattern = 'nested_loop' | 'two_sum' | 'recursion_no_memo' | 'linear_search_in_loop' | 'string_concat_in_loop' | 'heap_priority_queue' | 'bfs_queue' | 'unbalanced_tree' | 'ml_model' | 'regression' | 'already_optimal' | 'unknown'
 
 export function detectComplexity(code: string, language: string = 'python'): { time: string; gap: number; cognitive: string; pattern: Pattern } {
     const noComments = code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|#.*/g, '')
@@ -39,7 +39,11 @@ export function detectComplexity(code: string, language: string = 'python'): { t
     const isBfsCandidate = /\b(bfs|levelOrder|breadthFirst|level_order|queue)\b/i.test(noComments) && (/\.pop\(0\)/.test(noComments) || (lang === 'java' && /\.remove\(0\)/.test(noComments)) || (lang === 'js' && /\sshift\s*\(/.test(noComments)))
     const isTree = /\b(node|root|left|right)\b/i.test(noComments) && /\.(left|right)\b/.test(noComments)
     const isUnbalancedTree = isTree && !/\b(avl|height|balance|color)\b/i.test(noComments)
+    const isML = /svm|classifier|regressor|randomforest|linearregression|sklearn/i.test(noComments)
 
+    if (isML) {
+        return { time: 'O(log n)', gap: 50, cognitive: 'High', pattern: 'ml_model' }
+    }
     if (hasRecursion && !hasMemo) {
         return { time: 'O(2ⁿ)', gap: 85, cognitive: 'High', pattern: 'recursion_no_memo' }
     }
@@ -279,6 +283,34 @@ export function generateHint(code: string, _language: string): HintInfo {
         }
     }
 
+
+    if (pattern === 'ml_model') {
+        return {
+            codeExplanation: [
+                `🔴 **${funcName}** is a Manual Classifier / Predictor loop.`,
+                `📊 Calculating dot products or splitting trees manually in a loop is slow and error-prone.`,
+                `⏱️ While functional, it lacks the vectorized performance of modern libraries.`,
+                `💡 The fix: Use optimized libraries or matrix operations (Numpy/Torch) to handle large datasets.`
+            ].join('\n'),
+            question: `When training an SVM or Random Forest, what is the term for the parameters (like C or max_depth) set BEFORE training to affect accuracy?`,
+            acceptedKeywords: ['hyperparameter', 'params', 'parameters', 'tuning', 'c', 'depth', 'gamma', 'kernel'],
+            wrongAnswerHint: `Think of "Hyperparameters" — parameters that define how the model learns.`
+        }
+    }
+
+    if (pattern === 'regression') {
+        return {
+            codeExplanation: [
+                `🔴 **${funcName}** is estimating a value (Regression).`,
+                `📊 If you use a simple linear model on non-linear data, your error (MSE) will stay high.`,
+                `⏱️ Iterating through every data point for Gradient Descent is educational but O(n*iterations).`,
+                `💡 The fix: Use Polynomial transforms or non-linear kernels to capture complex relationships.`
+            ].join('\n'),
+            question: `What's the most common metric used to measure the "average squared error" in regression tasks?`,
+            acceptedKeywords: ['mse', 'mean squared error', 'rmse', 'mae', 'r2', 'r-squared'],
+            wrongAnswerHint: `Look for "Mean Squared Error" (MSE).`
+        }
+    }
 
     // Already optimal — Level 3 explanation  
     return {
